@@ -1,0 +1,178 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "8ebf779f-fc86-477b-8fe5-5363cdedfe83",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "preorders": {
+      "name": "preorders",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reference": {
+          "name": "reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "request_key": {
+          "name": "request_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "customer_name": {
+          "name": "customer_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "order_date": {
+          "name": "order_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "chocolate": {
+          "name": "chocolate",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "lemon": {
+          "name": "lemon",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "mango": {
+          "name": "mango",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "raspberry": {
+          "name": "raspberry",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "pickup_window": {
+          "name": "pickup_window",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "price_feedback": {
+          "name": "price_feedback",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "unit_price_cents": {
+          "name": "unit_price_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 550
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "preorders_reference_unique": {
+          "name": "preorders_reference_unique",
+          "columns": [
+            "reference"
+          ],
+          "isUnique": true
+        },
+        "preorders_request_key_unique": {
+          "name": "preorders_request_key_unique",
+          "columns": [
+            "request_key"
+          ],
+          "isUnique": true
+        },
+        "preorders_created_at_idx": {
+          "name": "preorders_created_at_idx",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "valid_quantities": {
+          "name": "valid_quantities",
+          "value": "\"preorders\".\"chocolate\" BETWEEN 0 AND 99 AND \"preorders\".\"lemon\" BETWEEN 0 AND 99 AND \"preorders\".\"mango\" BETWEEN 0 AND 99 AND \"preorders\".\"raspberry\" BETWEEN 0 AND 99"
+        },
+        "has_slices": {
+          "name": "has_slices",
+          "value": "\"preorders\".\"chocolate\" + \"preorders\".\"lemon\" + \"preorders\".\"mango\" + \"preorders\".\"raspberry\" > 0"
+        },
+        "valid_pickup_window": {
+          "name": "valid_pickup_window",
+          "value": "\"preorders\".\"pickup_window\" IN ('09-11', '11-13', '13-15', '15-17')"
+        },
+        "valid_price_feedback": {
+          "name": "valid_price_feedback",
+          "value": "\"preorders\".\"price_feedback\" IS NULL OR \"preorders\".\"price_feedback\" IN ('Good value', 'Reasonable', 'Too expensive')"
+        }
+      }
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}
