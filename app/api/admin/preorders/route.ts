@@ -13,5 +13,5 @@ export async function GET(request:Request) {
     const db=getDb();const count=await db.select({total:sql<number>`count(*)`}).from(preorders).get();
     const rows=await db.select().from(preorders).orderBy(desc(preorders.createdAt),desc(preorders.id)).limit(pageSize).offset((page-1)*pageSize);
     return json({rows:rows.map(({requestKey,...row})=>row),total:count?.total||0,page,pageSize});
-  } catch {return json({error:"Could not load mock preorders. Please try again."},503);}
+  } catch {return json({error:"Could not load preorders. Please try again."},503);}
 }

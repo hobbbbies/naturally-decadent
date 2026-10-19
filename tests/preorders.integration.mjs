@@ -26,9 +26,16 @@ export async function runIntegration(base='http://127.0.0.1:5173') {
   assert.deepEqual(duplicates.map(response=>response.status).sort(),[200,201]);
   const duplicateBodies=await Promise.all(duplicates.map(response=>response.json()));assert.equal(duplicateBodies[0].reference,duplicateBodies[1].reference);
   checks.push('Concurrent retries create one database row');
-  const login=await fetch(base+'/signin-with-chatgpt?return_to=/admin',{redirect:'manual'});
-  assert.ok([302,303,307].includes(login.status),`Local sign-in returned ${login.status}`);
-  const cookie=login.headers.getSetCookie().map(value=>value.split(';')[0]).join('; ');assert.ok(cookie);
+  assert.equal((await send('/api/admin/login',{password:'incorrect'})).status,401);
+  assert.equal((await send('/api/admin/login',{password:'12345'},{headers:{...jsonHeaders,Origin:'https://example.invalid'}})).status,403);
+  assert.equal((await fetch(base+'/api/admin/preorders',{headers:{Cookie:'nd_admin_session='+'0'.repeat(64)}})).status,403);
+  assert.equal((await fetch(base+'/api/admin/preorders',{headers:{'oai-authenticated-user-id':'forged','oai-authenticated-user-email':'seedy@sites.test'}})).status,403);
+  const login=await send('/api/admin/login',{password:process.env.ADMIN_TEST_PASSWORD||'12345'});
+  assert.equal(login.status,200);
+  const setCookie=login.headers.get('set-cookie');
+  assert.ok(setCookie.includes('HttpOnly'));assert.ok(setCookie.includes('SameSite=Strict'));assert.ok(setCookie.includes('Max-Age=28800'));
+  const cookie=setCookie.split(';')[0];assert.ok(cookie.startsWith('nd_admin_session='));
+  checks.push('Password login rejects wrong passwords and forged sessions, then sets an HTTP-only session cookie');
   const adminHeaders={...jsonHeaders,Cookie:cookie};
   const list=await fetch(base+'/api/admin/preorders',{headers:{Cookie:cookie}});assert.equal(list.status,200);const listing=await list.json();
   const row=listing.rows.find(item=>item.reference===receipt.reference);assert.ok(row);assert.ok(!('requestKey' in row));assert.equal(row.priceFeedback,null);
@@ -43,6 +50,14 @@ export async function runIntegration(base='http://127.0.0.1:5173') {
   assert.ok(text.includes(receipt.reference));assert.ok(text.includes('"\'=HYPERLINK'));assert.ok(!text.includes(valid.requestKey));
   checks.push('CSV export contains saved records and escapes spreadsheet formulas');
   const reread=await fetch(base+'/api/admin/preorders',{headers:{Cookie:cookie}});const persisted=(await reread.json()).rows.find(item=>item.id===row.id);assert.equal(persisted.customerName,update.customerName);
+  const logout=await send('/api/admin/logout',{}, {headers:adminHeaders});assert.equal(logout.status,200);assert.ok(logout.headers.get('set-cookie').includes('Max-Age=0'));
+  assert.equal((await fetch(base+'/api/admin/preorders',{headers:{Cookie:cookie}})).status,403);
+  assert.equal((await fetch(base+'/api/admin/preorders/export',{headers:{Cookie:cookie}})).status,403);
+  checks.push('Logout revokes the session, including replay of the old cookie');
+  const rateHeaders={...jsonHeaders,'cf-connecting-ip':`2001:db8::${Math.floor(Math.random()*65535).toString(16)}`};
+  for(let i=0;i<10;i++)assert.equal((await send('/api/admin/login',{password:'incorrect'},{headers:rateHeaders})).status,401);
+  const blocked=await send('/api/admin/login',{password:'incorrect'},{headers:rateHeaders});assert.equal(blocked.status,429);assert.ok(Number(blocked.headers.get('retry-after'))>0);
+  checks.push('Repeated failed password attempts are rate limited');
   return {passed:checks.length,checks,reference:receipt.reference};
 }
 
