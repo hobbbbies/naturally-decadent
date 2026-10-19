@@ -18,6 +18,8 @@ Successful login creates an eight-hour session with an HTTP-only cookie; only a 
 
 Choose **Edit** to change a customer's name, date, quantities, pickup window or price feedback. Choose **Save changes** to update the database. Original submission timestamps stay intact, and outdated edits are rejected if another save occurred in the meantime.
 
+Choose **Delete** beside an order and confirm to permanently remove it. Deletion requires an active admin session and rejects outdated versions if the order has changed since the list was loaded.
+
 Choose **Export CSV** for a spreadsheet copy. Editing the CSV does not update the database automatically. A unique submission key prevents duplicates when the same request is retried. There is no public endpoint for reading preorder names.
 
 ## Local development

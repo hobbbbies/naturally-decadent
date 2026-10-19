@@ -8,7 +8,8 @@ export async function runIntegration(base='http://127.0.0.1:5173') {
   const valid={customerName:`QA preorder ${Date.now()}`,orderDate:'2026-10-18',chocolate:2,lemon:0,mango:1,raspberry:0,pickupWindow:'11-13',requestKey:crypto.randomUUID()};
   for(const path of ['/api/admin/preorders','/api/admin/preorders/export'])assert.equal((await fetch(base+path)).status,403);
   assert.equal((await send('/api/admin/preorders/missing',{}, {method:'PATCH'})).status,403);
-  checks.push('Admin reads, exports and edits reject anonymous requests');
+  assert.equal((await send('/api/admin/preorders/missing',{version:1}, {method:'DELETE'})).status,403);
+  checks.push('Admin reads, exports, edits and deletion reject anonymous requests');
   assert.equal((await send('/api/preorders',valid,{headers:{...jsonHeaders,Origin:'https://example.invalid'}})).status,403);
   assert.equal((await send('/api/preorders',valid,{headers:{'Content-Type':'application/json'}})).status,403);
   assert.equal((await send('/api/preorders',{...valid,customerName:'x'.repeat(9000)})).status,413);
@@ -50,6 +51,16 @@ export async function runIntegration(base='http://127.0.0.1:5173') {
   assert.ok(text.includes(receipt.reference));assert.ok(text.includes('"\'=HYPERLINK'));assert.ok(!text.includes(valid.requestKey));
   checks.push('CSV export contains saved records and escapes spreadsheet formulas');
   const reread=await fetch(base+'/api/admin/preorders',{headers:{Cookie:cookie}});const persisted=(await reread.json()).rows.find(item=>item.id===row.id);assert.equal(persisted.customerName,update.customerName);
+  const deletePath='/api/admin/preorders/'+row.id;
+  assert.equal((await send(deletePath,{version:saved.version},{method:'DELETE',headers:{...adminHeaders,Origin:'https://example.invalid'}})).status,403);
+  assert.equal((await send(deletePath,{}, {method:'DELETE',headers:adminHeaders})).status,422);
+  assert.equal((await send(deletePath,{version:row.version},{method:'DELETE',headers:adminHeaders})).status,409);
+  const afterStale=await fetch(base+'/api/admin/preorders',{headers:{Cookie:cookie}});assert.ok((await afterStale.json()).rows.some(item=>item.id===row.id));
+  assert.equal((await send(deletePath,{version:saved.version},{method:'DELETE',headers:adminHeaders})).status,200);
+  assert.equal((await send(deletePath,{version:saved.version},{method:'DELETE',headers:adminHeaders})).status,404);
+  const afterDelete=await fetch(base+'/api/admin/preorders',{headers:{Cookie:cookie}});assert.ok(!(await afterDelete.json()).rows.some(item=>item.id===row.id));
+  const afterDeleteCsv=await fetch(base+'/api/admin/preorders/export',{headers:{Cookie:cookie}});assert.ok(!(await afterDeleteCsv.text()).includes(receipt.reference));
+  checks.push('Deletion requires authorization and same-origin requests, rejects stale versions, and removes the record from the list and export');
   const logout=await send('/api/admin/logout',{}, {headers:adminHeaders});assert.equal(logout.status,200);assert.ok(logout.headers.get('set-cookie').includes('Max-Age=0'));
   assert.equal((await fetch(base+'/api/admin/preorders',{headers:{Cookie:cookie}})).status,403);
   assert.equal((await fetch(base+'/api/admin/preorders/export',{headers:{Cookie:cookie}})).status,403);
