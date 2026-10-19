@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     const created=await db.insert(preorders).values({id,reference:`ND-${id.replaceAll("-","").slice(0,12).toUpperCase()}`,requestKey,...fields,unitPriceCents:UNIT_PRICE_CENTS,createdAt:now,updatedAt:now}).onConflictDoNothing({target:preorders.requestKey}).returning().get();
     const saved=created || await db.select().from(preorders).where(eq(preorders.requestKey,requestKey)).get();
     if(!saved) throw new Error("Unable to read saved preorder");
-    if(!Object.entries(fields).every(([key,value])=>saved[key as keyof typeof saved]===value)) return json({error:"This submission was already saved with different details. Refresh the page to start a new mock preorder."},409);
+    if(!Object.entries(fields).every(([key,value])=>saved[key as keyof typeof saved]===value)) return json({error:"This submission was already saved with different details. Refresh the page to start a new preorder."},409);
     const slices=saved.chocolate+saved.lemon+saved.mango+saved.raspberry;
     return json({reference:saved.reference,slices,totalCents:slices*saved.unitPriceCents},created?201:200);
   } catch(error) {

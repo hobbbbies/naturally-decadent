@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Naturally Decadent | Cakes in Guelph",
-  description: "Four dairy-free cake recipes, made without refined sugar. Share a non-binding mock preorder for our Guelph venture experiment.",
+  description: "Four creamy, dairy-free cake flavours in Guelph, made without refined sugar. Preorder your favourite slices from Naturally Decadent.",
   robots: { index: false, follow: false },
   icons: {
     icon: "/assets/favicon.svg",

@@ -26,3 +26,14 @@ export const preorders = sqliteTable("preorders", {
 ]);
 
 export type Preorder = typeof preorders.$inferSelect;
+
+export const adminSessions = sqliteTable("admin_sessions", {
+  tokenHash: text("token_hash").primaryKey(),
+  expiresAt: integer("expires_at").notNull(),
+}, (table) => [index("admin_sessions_expiry_idx").on(table.expiresAt)]);
+
+export const adminLoginAttempts = sqliteTable("admin_login_attempts", {
+  key: text("key").primaryKey(),
+  attempts: integer("attempts").notNull().default(1),
+  resetAt: integer("reset_at").notNull(),
+});
