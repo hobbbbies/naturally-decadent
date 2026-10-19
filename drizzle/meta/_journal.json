@@ -15,6 +15,13 @@
       "when": 1792368344449,
       "tag": "0001_certain_steel_serpent",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792369504245,
+      "tag": "0002_clumsy_pretty_boy",
+      "breakpoints": true
     }
   ]
 }

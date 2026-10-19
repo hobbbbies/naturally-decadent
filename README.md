@@ -5,10 +5,12 @@ A cake showcase with online preorders, a database, and password-protected admini
 ## Pages
 
 - `/` — cake homepage and ordering instructions.
-- `/order` — name, date, four cake quantities, preferred pickup window, optional price feedback, and confirmation reference.
+- `/order` — name, date, four cake quantities, optional pickup window, optional price feedback, and confirmation reference.
 - `/admin` — password login, preorder list, edit form, and CSV export.
 
 All prices are $5.50 CAD per 80 g slice. The page has no deadline or price-acknowledgement field. Requests save directly to the database. Payment and pickup arrangements are confirmed separately; no online payment or email delivery service is configured.
+
+Pickup time starts blank. Click a selected time again or choose **Clear selection** to remove it; orders can be saved with no time preference. The admin editor also has a blank pickup option, and the CSV leaves that cell empty.
 
 ## Administration
 
@@ -36,10 +38,11 @@ On a fresh local database, apply migrations in order:
 ```sh
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_lying_stryfe.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_certain_steel_serpent.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0002_clumsy_pretty_boy.sql
 npm run dev -- --hostname 127.0.0.1 --port 5173
 ```
 
-Apply each migration only once. The first creates preorders; the second adds admin sessions and login-attempt counters. Local and hosted databases are separate. Existing preorder records are preserved.
+Apply each migration only once. The first creates preorders; the second adds admin sessions and login-attempt counters; the third permits blank pickup times while retaining existing orders. Local and hosted databases are separate. Existing preorder records are preserved.
 
 ## Editing content
 

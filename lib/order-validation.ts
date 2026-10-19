@@ -13,7 +13,7 @@ export const orderFields = z.object({
   lemon: quantity,
   mango: quantity,
   raspberry: quantity,
-  pickupWindow: z.enum(["09-11", "11-13", "13-15", "15-17"], { message: "Choose a pickup window." }),
+  pickupWindow: z.enum(["", "09-11", "11-13", "13-15", "15-17"], { message: "Enter a valid pickup window." }).nullish().transform(value => value ?? ""),
   priceFeedback: z.enum(["Good value", "Reasonable", "Too expensive"]).nullable().default(null),
 });
 const hasSlices = (data: {chocolate:number;lemon:number;mango:number;raspberry:number}) => data.chocolate + data.lemon + data.mango + data.raspberry > 0;

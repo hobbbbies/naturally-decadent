@@ -11,7 +11,7 @@ export const preorders = sqliteTable("preorders", {
   lemon: integer("lemon").notNull().default(0),
   mango: integer("mango").notNull().default(0),
   raspberry: integer("raspberry").notNull().default(0),
-  pickupWindow: text("pickup_window").notNull(),
+  pickupWindow: text("pickup_window").notNull().default(""),
   priceFeedback: text("price_feedback"),
   unitPriceCents: integer("unit_price_cents").notNull().default(550),
   version: integer("version").notNull().default(1),
@@ -21,7 +21,7 @@ export const preorders = sqliteTable("preorders", {
   index("preorders_created_at_idx").on(table.createdAt),
   check("valid_quantities", sql`${table.chocolate} BETWEEN 0 AND 99 AND ${table.lemon} BETWEEN 0 AND 99 AND ${table.mango} BETWEEN 0 AND 99 AND ${table.raspberry} BETWEEN 0 AND 99`),
   check("has_slices", sql`${table.chocolate} + ${table.lemon} + ${table.mango} + ${table.raspberry} > 0`),
-  check("valid_pickup_window", sql`${table.pickupWindow} IN ('09-11', '11-13', '13-15', '15-17')`),
+  check("valid_pickup_window", sql`${table.pickupWindow} IN ('', '09-11', '11-13', '13-15', '15-17')`),
   check("valid_price_feedback", sql`${table.priceFeedback} IS NULL OR ${table.priceFeedback} IN ('Good value', 'Reasonable', 'Too expensive')`),
 ]);
 

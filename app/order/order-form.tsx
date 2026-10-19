@@ -10,6 +10,7 @@ const emptyQuantities = {chocolate:"0",lemon:"0",mango:"0",raspberry:"0"};
 export default function OrderForm() {
   const [quantities,setQuantities]=useState<Record<Flavour,string>>(emptyQuantities);
   const [date,setDate]=useState("");
+  const [pickupWindow,setPickupWindow]=useState("");
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
   const [errors,setErrors]=useState<Record<string,string>>({});
@@ -26,7 +27,7 @@ export default function OrderForm() {
     event.preventDefault();if(inFlight.current)return;
     const form=event.currentTarget;const data=new FormData(form);
     requestKey.current ||= crypto.randomUUID();
-    const payload={customerName:String(data.get("customerName")||""),orderDate:date,...Object.fromEntries(FLAVOURS.map(flavour=>[flavour,quantities[flavour].trim()===""?Number.NaN:Number(quantities[flavour])])),pickupWindow:data.get("pickupWindow"),priceFeedback:data.get("priceFeedback")||null,requestKey:requestKey.current};
+    const payload={customerName:String(data.get("customerName")||""),orderDate:date,...Object.fromEntries(FLAVOURS.map(flavour=>[flavour,quantities[flavour].trim()===""?Number.NaN:Number(quantities[flavour])])),pickupWindow,priceFeedback:data.get("priceFeedback")||null,requestKey:requestKey.current};
     const parsed=createOrderSchema.safeParse(payload);
     if(!parsed.success){setErrors(validationErrors(parsed.error));setMessage("Please check the highlighted fields.");requestAnimationFrame(()=>alertRef.current?.focus());return;}
     inFlight.current=true;setBusy(true);setMessage("");setErrors({});
@@ -57,7 +58,7 @@ export default function OrderForm() {
         <details className="recipe-details"><summary>Ingredients & allergen information</summary><div>{CAKES.map(cake=><div key={cake.id}><h3>{cake.name}</h3><p>{cake.ingredients}</p><p><strong>Contains / key ingredients:</strong> {cake.allergens}</p></div>)}</div></details>
         <p className="storage-note"><strong>Storage:</strong> {STORAGE}</p>
       </section>
-      <fieldset className="choice-section" id="pickupWindow"><legend>2. Your preferred pickup time</legend><p className="field-help">Pickup in Guelph, Ontario. Choose one preferred window, Monday–Sunday. Exact pickup details are confirmed separately.</p><div className="radio-grid">{PICKUP_WINDOWS.map(window=><label key={window.value}><input type="radio" name="pickupWindow" value={window.value} required aria-invalid={Boolean(errors.pickupWindow)}/><span>{window.label}</span></label>)}</div></fieldset>
+      <fieldset className="choice-section" id="pickupWindow"><legend>2. Your preferred pickup time <span className="optional">Optional</span></legend><p className="field-help">Pickup in Guelph, Ontario, Monday–Sunday. Choose a preferred window or leave it blank. Exact pickup details are confirmed separately.</p><div className="radio-grid">{PICKUP_WINDOWS.map(window=><label key={window.value}><input type="radio" name="pickupWindow" value={window.value} checked={pickupWindow===window.value} onChange={()=>setPickupWindow(window.value)} onClick={()=>{if(pickupWindow===window.value)setPickupWindow("");}} onKeyDown={event=>{if(event.key===" "&&pickupWindow===window.value){event.preventDefault();setPickupWindow("");}}} aria-invalid={Boolean(errors.pickupWindow)}/><span>{window.label}</span></label>)}</div><button className="secondary-button clear-pickup" type="button" disabled={!pickupWindow} onClick={()=>setPickupWindow("")}>Clear selection</button></fieldset>
       <fieldset className="choice-section" id="priceFeedback"><legend>3. Your thoughts on the price <span className="optional">Optional</span></legend><p className="field-help">How do you feel about the price?</p><div className="feedback-options">{PRICE_FEEDBACK.map(value=><label key={value}><input type="radio" name="priceFeedback" value={value}/><span>{value}</span></label>)}<label><input type="radio" name="priceFeedback" value="" defaultChecked/><span>No response</span></label></div></fieldset>
       <div className="submit-area"><button className="primary-button" type="submit" disabled={busy}>{busy?"Saving your preorder…":"Submit preorder"}</button><p>Your preorder request will be saved.<br/>Payment and pickup details are confirmed separately.</p></div>
     </fieldset>
