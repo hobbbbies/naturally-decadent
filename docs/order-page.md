@@ -1,7 +1,5 @@
 # Preorder page
 
-The order page collects name, date, quantities, pickup preference, and optional price feedback. It displays the supplied ingredients, allergen details, storage instructions, and $5.50 CAD per 80 g price. Images remain placeholders. The page presents the business as a regular preorder service, with payment and exact pickup details confirmed separately. There is no deadline or price-acknowledgement field.
+The order page collects name, date, quantities, one required pickup window, required acknowledgement of the $5.50 CAD per 80 g price, and optional price feedback. Ingredients, allergens and frozen-storage instructions follow the supplied product information. Cake images are labelled as illustrations. The page presents a regular preorder service, with payment and exact pickup details confirmed separately.
 
-Submitting stores a preorder and returns a reference after a successful save. Errors retain form contents. Retries use a unique key to prevent duplicate rows, and the backend calculates totals from its own price. The admin page uses a password and database-backed sessions, with checks on every protected read, edit, and export. Existing records remain intact.
-
-The original landing-page design notes describe earlier copy and ordering workflows and are retained as historical project documentation.
+Client and server validation require pickup and acknowledgement for new preorders. The database structure is unchanged: it stores the unit price but does not have a separate acknowledgement column. Older responses and the admin editor continue to support blank pickup times. Retries use a unique key, totals are calculated on the server, and successful submissions return a reference.

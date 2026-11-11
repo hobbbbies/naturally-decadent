@@ -5,12 +5,12 @@ A cake showcase with online preorders, a database, and password-protected admini
 ## Pages
 
 - `/` — cake homepage and ordering instructions.
-- `/order` — name, date, four cake quantities, optional pickup window, optional price feedback, and confirmation reference.
+- `/order` — name, date, four cake quantities, required pickup window and price acknowledgement, optional price feedback, and confirmation reference.
 - `/admin` — password login, preorder list, edit form, and CSV export.
 
-All prices are $5.50 CAD per 80 g slice. The page has no deadline or price-acknowledgement field. Requests save directly to the database. Payment and pickup arrangements are confirmed separately; no online payment or email delivery service is configured.
+All prices are $5.50 CAD per 80 g slice. Requests save directly to the database. Payment and pickup details are confirmed separately.
 
-Pickup time starts blank. Click a selected time again or choose **Clear selection** to remove it; orders can be saved with no time preference. The admin editor also has a blank pickup option, and the CSV leaves that cell empty.
+New responses require a pickup window and explicit price acknowledgement in both client and server validation. The existing database stores the proposed unit price, without a separate acknowledgement column. No new migration is required. Existing responses and the admin editor retain support for blank pickup times.
 
 ## Administration
 

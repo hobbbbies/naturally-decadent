@@ -10,7 +10,8 @@ export async function POST(request: Request) {
   if(body.error) return body.error;
   const parsed = createOrderSchema.safeParse(body.data);
   if(!parsed.success) return json({error:"Please check the highlighted fields.", fields:validationErrors(parsed.error)},422);
-  const {requestKey,...fields}=parsed.data;
+  // Acknowledgement is required for new preorders; the existing database stores the proposed unit price.
+  const {requestKey,priceAcknowledged,...fields}=parsed.data;
   try {
     const db=getDb();const now=new Date().toISOString();const id=crypto.randomUUID();
     const created=await db.insert(preorders).values({id,reference:`ND-${id.replaceAll("-","").slice(0,12).toUpperCase()}`,requestKey,...fields,unitPriceCents:UNIT_PRICE_CENTS,createdAt:now,updatedAt:now}).onConflictDoNothing({target:preorders.requestKey}).returning().get();

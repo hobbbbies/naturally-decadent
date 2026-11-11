@@ -9,6 +9,7 @@ export default function OrderPage() {
     <main className="form-shell" id="main">
       <h1>Preorder</h1>
       <p className="form-intro">Dairy-free recipes · Made without refined sugar<br/><strong>$5.50 CAD per 80 g slice</strong></p>
+      <p className="field-help">Please complete all required fields.</p>
       <OrderForm />
     </main>
     <footer className="simple-footer"><span>Naturally Decadent · Guelph, Ontario</span><a href="mailto:stefankvitanov@gmail.com">Questions? Email us</a></footer>
