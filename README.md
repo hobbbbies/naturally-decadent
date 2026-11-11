@@ -5,7 +5,7 @@ A cake showcase with online preorders, a database, and password-protected admini
 ## Pages
 
 - `/` — cake homepage and ordering instructions.
-- `/order` — name, date, four cake quantities, required pickup window and price acknowledgement, optional price feedback, and confirmation reference.
+- `/order` — name, required contact email, date, four cake quantities, required pickup window and price acknowledgement, optional price feedback, and confirmation reference.
 - `/admin` — password login, preorder list, edit form, and CSV export.
 
 All prices are $5.50 CAD per 80 g slice. Requests save directly to the database. Payment and pickup details are confirmed separately.
@@ -18,7 +18,7 @@ Open `/admin` and enter the administrator password. The server reads it from the
 
 Successful login creates an eight-hour session with an HTTP-only cookie; only a SHA-256 hash of its random token is stored in the database. Every admin endpoint checks the session. Signing out revokes it in the database. Repeated login attempts are rate limited per network address and time window. Production cookies use Secure when served over HTTPS.
 
-Choose **Edit** to change a customer's name, date, quantities, pickup window or price feedback. Choose **Save changes** to update the database. Original submission timestamps stay intact, and outdated edits are rejected if another save occurred in the meantime.
+The admin list includes the customer's email as a contact link, and CSV exports include an email address column. Choose **Edit** to change a customer's name, email, date, quantities, pickup window or price feedback. Choose **Save changes** to update the database. Original submission timestamps stay intact, and outdated edits are rejected if another save occurred in the meantime. Older preorders without an email remain editable. Email addresses are collected for contact; the app does not send automated email.
 
 Choose **Delete** beside an order and confirm to permanently remove it. Deletion requires an active admin session and rejects outdated versions if the order has changed since the list was loaded.
 
@@ -39,10 +39,11 @@ On a fresh local database, apply migrations in order:
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_lying_stryfe.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_certain_steel_serpent.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0002_clumsy_pretty_boy.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0003_customer_email.sql
 npm run dev -- --hostname 127.0.0.1 --port 5173
 ```
 
-Apply each migration only once. The first creates preorders; the second adds admin sessions and login-attempt counters; the third permits blank pickup times while retaining existing orders. Local and hosted databases are separate. Existing preorder records are preserved.
+Apply each migration only once. The first creates preorders; the second adds admin sessions and login-attempt counters; the third permits blank pickup times while retaining existing orders; the fourth adds customer email addresses. Local and hosted databases are separate. Existing preorder records are preserved.
 
 ## Editing content
 
@@ -65,6 +66,7 @@ Replace photo paths and alt text in `app/order/order-form.tsx` and `content/home
 ```sh
 npx tsc --noEmit
 node --experimental-strip-types --test tests/money.test.mjs
+node --experimental-strip-types --test tests/order-validation.test.mjs
 node tests/preorders.integration.mjs
 npm run build
 ```

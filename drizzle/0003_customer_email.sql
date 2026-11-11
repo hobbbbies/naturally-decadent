@@ -1,0 +1,1 @@
+ALTER TABLE `preorders` ADD `customer_email` text;

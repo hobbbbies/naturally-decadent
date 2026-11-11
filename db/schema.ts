@@ -6,6 +6,7 @@ export const preorders = sqliteTable("preorders", {
   reference: text("reference").notNull().unique(),
   requestKey: text("request_key").notNull().unique(),
   customerName: text("customer_name").notNull(),
+  customerEmail: text("customer_email"),
   orderDate: text("order_date").notNull(),
   chocolate: integer("chocolate").notNull().default(0),
   lemon: integer("lemon").notNull().default(0),

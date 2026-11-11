@@ -22,6 +22,13 @@
       "when": 1792369504245,
       "tag": "0002_clumsy_pretty_boy",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1794357186561,
+      "tag": "0003_customer_email",
+      "breakpoints": true
     }
   ]
 }

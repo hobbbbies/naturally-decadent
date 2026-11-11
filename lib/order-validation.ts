@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const quantity = z.number().int("Use a whole number.").min(0).max(99);
+const email = z.string().trim().max(254, "Use no more than 254 characters.").email("Enter a valid email address.");
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid date.").refine((value) => {
   const parsed = new Date(`${value}T00:00:00.000Z`);
   return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value && value >= "2000-01-01" && value <= "2100-12-31";
@@ -8,6 +9,7 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid date.").refi
 
 export const orderFields = z.object({
   customerName: z.string().trim().min(1, "Enter your name.").max(100, "Use no more than 100 characters.").refine(value => !/[\u0000-\u001f\u007f]/.test(value), "Enter a valid name."),
+  customerEmail: email.or(z.literal("")).nullish().transform(value => value || null),
   orderDate: date,
   chocolate: quantity,
   lemon: quantity,
@@ -18,6 +20,7 @@ export const orderFields = z.object({
 });
 const hasSlices = (data: {chocolate:number;lemon:number;mango:number;raspberry:number}) => data.chocolate + data.lemon + data.mango + data.raspberry > 0;
 export const createOrderSchema = orderFields.extend({
+  customerEmail: email,
   requestKey: z.string().uuid(),
   pickupWindow: z.enum(["09-11", "11-13", "13-15", "15-17"], { message: "Choose one preferred pickup window." }),
   priceAcknowledged: z.literal(true, { errorMap: () => ({ message: "Acknowledge the $5.50 CAD price per 80 g slice." }) }),
