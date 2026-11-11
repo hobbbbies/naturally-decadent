@@ -4,4 +4,4 @@
 
 .clear-pickup{margin-top:12px}
 
-.price-acknowledgement{display:flex;align-items:flex-start;gap:10px;margin:18px 0}.simple-page input[type=checkbox]{width:18px;height:18px;flex-shrink:0;accent-color:#4a242b;margin-top:2px}
+.price-acknowledgement{display:flex;clear:both;align-items:flex-start;gap:10px;margin:18px 0;max-width:100%}.price-acknowledgement>span{min-width:0;overflow-wrap:anywhere}.simple-page input[type=checkbox]{width:18px;height:18px;flex-shrink:0;accent-color:#4a242b;margin:2px 0 0}
