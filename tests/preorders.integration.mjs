@@ -12,7 +12,6 @@ export async function runIntegration(base='http://127.0.0.1:5173') {
   checks.push('Admin reads, exports, edits and deletion reject anonymous requests');
   assert.equal((await send('/api/preorders',valid,{headers:{...jsonHeaders,Origin:'https://example.invalid'}})).status,403);
   assert.equal((await send('/api/preorders',valid,{headers:{'Content-Type':'application/json'}})).status,403);
-  assert.equal((await send('/api/preorders',{...valid,customerName:'x'.repeat(9000)})).status,413);
   const invalid=[{chocolate:-1},{chocolate:1.5},{chocolate:'1'},{chocolate:100},{chocolate:0,mango:0},{customerName:'   '},{orderDate:'2026-02-30'},{pickupWindow:'invalid'},{pickupWindow:''},{pickupWindow:null},{priceAcknowledged:false},{priceAcknowledged:null},{priceFeedback:'bad'},{unitPriceCents:1},{priceAcknowledgement:true}];
   for(const patch of invalid)assert.equal((await send('/api/preorders',{...valid,...patch})).status,422,JSON.stringify(patch));
   for(const customerEmail of ['',null,undefined,'invalid','person@']) {
@@ -87,6 +86,10 @@ export async function runIntegration(base='http://127.0.0.1:5173') {
   for(let i=0;i<10;i++)assert.equal((await send('/api/admin/login',{password:'incorrect'},{headers:rateHeaders})).status,401);
   const blocked=await send('/api/admin/login',{password:'incorrect'},{headers:rateHeaders});assert.equal(blocked.status,429);assert.ok(Number(blocked.headers.get('retry-after'))>0);
   checks.push('Repeated failed password attempts are rate limited');
+  // Workerd can restart its local connection after rejecting a body without reading it.
+  // Keep this transport-level case last so it does not interrupt the next local request.
+  assert.equal((await send('/api/preorders',{...valid,customerName:'x'.repeat(9000)})).status,413);
+  checks.push('Oversized submissions are rejected');
   return {passed:checks.length,checks,reference:receipt.reference};
 }
 

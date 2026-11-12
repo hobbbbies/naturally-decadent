@@ -5,6 +5,7 @@ import { CAKES, FLAVOURS, PICKUP_WINDOWS, PRICE_FEEDBACK, STORAGE, UNIT_PRICE_CE
 import { createOrderSchema, validationErrors } from "@/lib/order-validation";
 
 type Receipt = { reference:string; slices:number; totalCents:number };
+type SubmittedDetails = { email:string; pickupWindow:string; quantities:Record<Flavour,string> };
 const emptyQuantities = {chocolate:"0",lemon:"0",mango:"0",raspberry:"0"};
 
 export default function OrderForm() {
@@ -15,12 +16,17 @@ export default function OrderForm() {
   const [message,setMessage]=useState("");
   const [errors,setErrors]=useState<Record<string,string>>({});
   const [receipt,setReceipt]=useState<Receipt|null>(null);
+  const [submittedDetails,setSubmittedDetails]=useState<SubmittedDetails|null>(null);
   const requestKey=useRef("");
   const inFlight=useRef(false);
   const alertRef=useRef<HTMLDivElement>(null);
   const receiptRef=useRef<HTMLElement>(null);
   const total=FLAVOURS.reduce((sum,flavour)=>sum+(Number(quantities[flavour])||0),0);
   useEffect(()=>{const now=new Date();setDate(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`);},[]);
+  useEffect(()=>{
+    const flavour=new URLSearchParams(window.location.search).get("flavour");
+    if(FLAVOURS.includes(flavour as Flavour))setQuantities({...emptyQuantities,[flavour as Flavour]:"1"});
+  },[]);
   useEffect(()=>{if(receipt)receiptRef.current?.focus();},[receipt]);
 
   async function submit(event:FormEvent<HTMLFormElement>) {
@@ -35,6 +41,7 @@ export default function OrderForm() {
       const response=await fetch("/api/preorders",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(parsed.data)});
       const result=await response.json() as Receipt & {error?:string;fields?:Record<string,string>};
       if(!response.ok){setErrors(result.fields||{});throw new Error(result.error||"Your submission could not be saved. Please try again.");}
+      setSubmittedDetails({email:parsed.data.customerEmail,pickupWindow:parsed.data.pickupWindow,quantities:{...quantities}});
       setReceipt(result);
     } catch(error){setMessage(error instanceof Error?error.message:"Your submission could not be confirmed. Please try again.");requestAnimationFrame(()=>alertRef.current?.focus());}
     finally{inFlight.current=false;setBusy(false);}
@@ -43,7 +50,8 @@ export default function OrderForm() {
   if(receipt)return <section className="receipt" ref={receiptRef} tabIndex={-1} aria-labelledby="receipt-title">
     <span className="receipt-check" aria-hidden="true">✓</span><h2 id="receipt-title">Your preorder request is received.</h2>
     <p>Thank you for choosing Naturally Decadent.</p><dl><div><dt>Reference</dt><dd>{receipt.reference}</dd></div><div><dt>Cake slices</dt><dd>{receipt.slices}</dd></div><div><dt>Total</dt><dd>{money(receipt.totalCents)} CAD</dd></div></dl>
-    <p>Please keep your reference. Payment and pickup details are confirmed separately.</p><a className="primary-button" href="/">Back to our cakes</a>
+    {submittedDetails&&<><p>{CAKES.filter(cake=>Number(submittedDetails.quantities[cake.id])>0).map(cake=>`${cake.name} × ${submittedDetails.quantities[cake.id]}`).join(" · ")}</p><p><strong>Preferred pickup window:</strong> {PICKUP_WINDOWS.find(window=>window.value===submittedDetails.pickupWindow)?.label}</p><p><strong>What happens next?</strong> We’ll contact you at {submittedDetails.email} to confirm availability and arrange the pickup day, exact Guelph address and payment.</p></>}
+    <p>Keep your reference. Your pickup window is a preference until confirmed. To change or cancel your request, <a href={`mailto:stefankvitanov@gmail.com?subject=${encodeURIComponent(`Preorder ${receipt.reference}`)}`}>email us with this reference</a>.</p><a className="primary-button" href="/">Back to our cakes</a>
   </section>;
 
   return <form onSubmit={submit} noValidate={false} className="preorder-form">
@@ -51,17 +59,17 @@ export default function OrderForm() {
     {message&&<div className="form-error" role="alert" tabIndex={-1} ref={alertRef}>{message}{Object.keys(errors).length>0&&<ul>{Object.entries(errors).map(([field,error])=><li key={field}><a href={`#${field==="quantities"?"cake-slices":field}`}>{error}</a></li>)}</ul>}</div>}
     <fieldset disabled={busy} className="form-fields">
       <legend className="visually-hidden">Preorder details</legend>
-      <div className="customer-fields"><label htmlFor="customerName">Customer name <input id="customerName" name="customerName" autoComplete="name" required maxLength={100} aria-invalid={Boolean(errors.customerName)} /></label><label htmlFor="orderDate">Date <input id="orderDate" name="orderDate" type="date" min="2000-01-01" max="2100-12-31" value={date} onChange={event=>setDate(event.target.value)} required aria-invalid={Boolean(errors.orderDate)} /></label></div>
+      <div className="customer-fields"><label htmlFor="customerName">Customer name (required) <input id="customerName" name="customerName" autoComplete="name" required maxLength={100} aria-invalid={Boolean(errors.customerName)} /></label><label htmlFor="orderDate">Request date (required) <input id="orderDate" name="orderDate" type="date" min="2000-01-01" max="2100-12-31" value={date} onChange={event=>setDate(event.target.value)} required aria-invalid={Boolean(errors.orderDate)} /></label></div>
       <div className="customer-email-field"><label htmlFor="customerEmail">Email address (required)<input id="customerEmail" name="customerEmail" type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} required maxLength={254} aria-describedby="customerEmail-help" aria-invalid={Boolean(errors.customerEmail)}/></label><p className="field-help" id="customerEmail-help">We’ll use this to contact you about your preorder and pickup.</p></div>
-      <section aria-labelledby="cake-slices"><h2 id="cake-slices">1. Choose your cake slices</h2><p className="field-help">Enter a quantity for each flavour</p>
+      <section aria-labelledby="cake-slices-title" id="cake-slices"><h2 id="cake-slices-title">1. Choose your cake slices</h2><p className="field-help">Choose at least one slice. Each flavour is $5.50 CAD per 80 g slice. All flavours contain nuts; review ingredients and allergens below.</p>
         <div className="order-cakes">{CAKES.map(cake=><div className="order-cake" key={cake.id}><div className="order-photo"><img src={`/assets/${cake.id}-placeholder.svg`} alt={`${cake.name} cake illustration`} width={120} height={120}/><span>Cake illustration</span></div><div className="order-cake-info"><h3>{cake.name}</h3><p>$5.50 CAD · 80 g</p>{cake.id==="lemon"&&<small>Contains honey; not vegan.</small>}</div><label className="quantity-label" htmlFor={cake.id}>Quantity<input id={cake.id} name={cake.id} type="number" min="0" max="99" step="1" inputMode="numeric" required value={quantities[cake.id]} onChange={event=>setQuantities({...quantities,[cake.id]:event.target.value})} aria-label={`${cake.name} quantity`} aria-invalid={Boolean(errors[cake.id]||errors.quantities)}/></label></div>)}</div>
         <p className="order-total" aria-live="polite"><span>{total} {total===1?"slice":"slices"}</span><strong>Total: {money(total*UNIT_PRICE_CENTS)} CAD</strong></p>
         <details className="recipe-details"><summary>Ingredients & allergen information</summary><div>{CAKES.map(cake=><div key={cake.id}><h3>{cake.name}</h3><p>{cake.ingredients}</p><p><strong>Contains / key ingredients:</strong> {cake.allergens}</p></div>)}</div></details>
         <p className="storage-note"><strong>Storage:</strong> {STORAGE}</p>
       </section>
-      <fieldset className="choice-section" id="pickupWindow"><legend>2. Your preferred pickup time (required)</legend><p className="field-help">Pickup in Guelph, Ontario, Monday–Sunday. Select one preferred window. Exact pickup details are confirmed separately.</p><div className="radio-grid">{PICKUP_WINDOWS.map(window=><label key={window.value}><input type="radio" name="pickupWindow" value={window.value} checked={pickupWindow===window.value} onChange={()=>setPickupWindow(window.value)} required aria-invalid={Boolean(errors.pickupWindow)}/><span>{window.label}</span></label>)}</div></fieldset>
+      <fieldset className="choice-section" id="pickupWindow"><legend>2. Your preferred pickup time (required)</legend><p className="field-help">Pickup in Guelph, Ontario, Monday–Sunday. Select one preferred window. This is a preferred window; we’ll arrange the pickup day and exact address by email before confirming.</p><div className="radio-grid">{PICKUP_WINDOWS.map(window=><label key={window.value}><input type="radio" name="pickupWindow" value={window.value} checked={pickupWindow===window.value} onChange={()=>setPickupWindow(window.value)} required aria-invalid={Boolean(errors.pickupWindow)}/><span>{window.label}</span></label>)}</div></fieldset>
       <fieldset className="choice-section" id="priceFeedback"><legend>3. Your thoughts on the price</legend><label className="price-acknowledgement" htmlFor="priceAcknowledged"><input id="priceAcknowledged" name="priceAcknowledged" type="checkbox" required aria-invalid={Boolean(errors.priceAcknowledged)}/><span>I understand that each 80 g slice is priced at $5.50 CAD (required).</span></label><p className="field-help">How do you feel about the price? (Optional)</p><div className="feedback-options">{PRICE_FEEDBACK.map(value=><label key={value}><input type="radio" name="priceFeedback" value={value}/><span>{value}</span></label>)}<label><input type="radio" name="priceFeedback" value="" defaultChecked/><span>No response</span></label></div></fieldset>
-      <div className="submit-area"><button className="primary-button" type="submit" disabled={busy}>{busy?"Saving your preorder…":"Submit preorder"}</button><p>Your preorder request will be saved. Payment and pickup details are confirmed separately.</p></div>
+      <div className="submit-area"><button className="primary-button" type="submit" disabled={busy}>{busy?"Saving your preorder…":"Submit preorder"}</button><p>Your request will be saved and a reference shown on screen. We’ll contact you by email to confirm availability, payment and pickup. No payment is taken here.</p></div>
     </fieldset>
   </form>;
 }
